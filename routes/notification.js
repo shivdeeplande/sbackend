@@ -83,12 +83,51 @@ router.post("/createNotification", upload.single("file"), async (req, res) => {
 
 
 
-router.get("/fetchAllNotifications", async (req,res) => {
+// router.get("/fetchAllNotifications", async (req,res) => {
+//   try {
+//     const notifications = await getAllItems(NOTIFICATION_TABLE_NAME);
+//     res.success({
+//       message: "Notifications found successfully",
+//       data: notifications
+//     })
+//   } catch (err) {
+//     res.errors({message:'Something went wrong',data:err})
+//   }
+// });
+
+
+router.get("/fetchAllNotifications", async (req,res) => { 
   try {
-    const notifications = await getAllItems(NOTIFICATION_TABLE_NAME);
+    // const notifications = await getAllItems(NOTIFICATION_TABLE_NAME);
+
+
+    const today = new Date();
+		// Get the timestamp for 7 days ago
+		const sevenDaysAgo = new Date();
+		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+		// Get the timestamp for 7 days afer
+		const sevenDaysAfter = new Date();
+		sevenDaysAfter.setDate(sevenDaysAfter.getDate() + 7);
+
+    // Convert to YYYY-MM-DD format
+		const formattedDate = sevenDaysAgo.toISOString().split("T")[0];
+
+
+    const notificationParams = {
+      TableName: NOTIFICATION_TABLE_NAME,
+      FilterExpression: "updatedDate >= :sevenDaysAgo",
+      ExpressionAttributeValues: {
+        ":sevenDaysAgo": formattedDate,
+      },
+      };
+
+
+    const filteredNotification = await getConditionalRecords(notificationParams);
+
     res.success({
       message: "Notifications found successfully",
-      data: notifications
+      data: filteredNotification
     })
   } catch (err) {
     res.errors({message:'Something went wrong',data:err})

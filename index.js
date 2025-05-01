@@ -6,7 +6,8 @@ const https = require("https");
 const cookieParser = require("cookie-parser");
 const i18n = require("i18n");
 const { restrictToLoggedinUserOnly, checkAuth } = require("./middlewares/auth");
-const responseFormatter = require('./middlewares/responseFormator')
+const responseFormatter = require('./middlewares/responseFormator');
+const translateMiddleware = require("./middlewares/translateMiddleware");
 const userRoute = require("./routes/user");
 const adminRoute = require("./routes/admin");
 const eventsRoute = require("./routes/events");
@@ -47,6 +48,7 @@ const options = {
 // Middleware to use i18n
 //app.use(i18n.init);
 app.use(cors());
+app.use(translateMiddleware);
 app.use(express.json());
 //app.use(morgan('dev'));
 app.use(responseFormatter)

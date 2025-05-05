@@ -188,7 +188,7 @@ router.post("/sendNotification", upload.single("file"), async (req,res) => {
   
         console.log(`Notification sent to token: ${token}`, response.data);
         res.success({
-          message: "Notification ssend successfully"
+          message: "Notification send successfully"
         })
       } catch (error) {
         if (error.response) {

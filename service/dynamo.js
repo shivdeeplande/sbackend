@@ -205,6 +205,27 @@ const getConditionalRecords = async(params) => {
 	}
   }
 
+
+//Get Latest Banner
+const getLatest5Records = async (params) => {
+	try {
+		const result = await DocumentClient.scan(params).promise();
+
+		// Sort by createdDate (latest first)
+		const sortedItems = result.Items.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+
+		// Limit to top 5
+		const limitedItems = sortedItems.slice(0, 5);
+
+		console.log("Top 5 Recent Records:", limitedItems);
+		return limitedItems;
+	} catch (error) {
+		console.error("Error fetching sorted records:", error);
+		return [];
+	}
+};
+
+
 // const getAdminMessage = async(adminId)=> {
 //   // Check if user is an admin
 //   const adminCheckParams = {
@@ -470,6 +491,7 @@ module.exports = {
 	DocumentClient,
 	getAllItems,
 	getConditionalRecords,
+	getLatest5Records,
 	getAdminMessage,
 	getUserMessage,
 	getUsersMessage,

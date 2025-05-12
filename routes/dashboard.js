@@ -6,7 +6,7 @@ require('dotenv').config();
 const {verifyToken} = require('../middlewares/verifyToken')
 
 const upload = multer({ storage: multer.memoryStorage() });
-const { getAllItems, generateRandomString,getConditionalRecords, countRecords, getLastValue,generateAuthToken,uploadFileToS3, deleteFileFromS3, insertItem, updateItem,filterItemsByQuery, getMultipleItemsByQuery,getSingleItemById, deleteSingleItemById, sendSMSMessage } = require('../service/dynamo');
+const { getAllItems, generateRandomString,getConditionalRecords, getLatest5Records, countRecords, getLastValue,generateAuthToken,uploadFileToS3, deleteFileFromS3, insertItem, updateItem,filterItemsByQuery, getMultipleItemsByQuery,getSingleItemById, deleteSingleItemById, sendSMSMessage } = require('../service/dynamo');
 router.get('/', async (req, res) => {
 	try {
 
@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
 			  ":stringTrue": "1",  // String "true"
 			},
 		  };
-		const totalbanner = await getConditionalRecords(bannerParams);
+		const totalbanner = await getLatest5Records(bannerParams);
 		const itemsBanner = totalbanner//await getAllItems('banner');
 		
 		const eventsParams = {
@@ -65,7 +65,7 @@ router.get('/', async (req, res) => {
 		},
 		};
 		  
-		const totalNews = await getConditionalRecords(newsParams);
+		const totalNews = await getLatest5Records(newsParams);
 		res.success({data:{
 			banner:itemsBanner,
 			events:itemsEvents,

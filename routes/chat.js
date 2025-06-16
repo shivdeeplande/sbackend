@@ -91,6 +91,7 @@ router.post("/send",verifyToken, upload.fields([{ name: "image" }, { name: "vide
 				sent: true,
 				received: true,
 				pending: false,
+				isRead: false,
 				createDate:new Date().toISOString(),
 				updatedDate:new Date().toISOString()
 			}
@@ -112,6 +113,7 @@ router.post("/send",verifyToken, upload.fields([{ name: "image" }, { name: "vide
 				item.senderId  = body.receiverId
 				item.receiverId  = body.senderId
 				item.text  = "Thanks for reaching out! We appreciate your message and will get back to you as soon as possible. If it's urgent, please let me know. Have a great day!"
+				item.isRead = true,
 				item.createDate =new Date().toISOString(),
 				item.updatedDate =new Date().toISOString()
 				await insertItem(TABLE_NAME, item);
@@ -122,6 +124,92 @@ router.post("/send",verifyToken, upload.fields([{ name: "image" }, { name: "vide
 		res.errors({message:'Something went wrong',data:err})
 	}
 });
+
+
+
+
+//Update chat message read status
+router.post("/update-read-status", verifyToken, async (req, res) => {
+	const { senderId, isRead } = req.body;
+  
+	try {
+	  if (typeof isRead !== "boolean") {
+		return res.status(400).json({ message: "isRead should be a boolean value (true/false)" });
+	  }
+  
+	  if (!senderId) {
+		return res.status(400).json({ message: "senderId is required" });
+	  }
+
+	  const indexName = "senderIdIndex"
+			const keyConditionExpression = "senderId = :senderId"
+			const expressionAttributeValues = {
+				":senderId": senderId
+			}
+  
+	  // Fetch all messages by senderId
+	  const messages = await getMultipleItemsByQuery(TABLE_NAME, indexName, keyConditionExpression, expressionAttributeValues);
+
+  
+	  if (!messages || messages.Items.length === 0) {
+		return res.status(404).json({ message: "No messages found for the given senderId" });
+	  }
+  
+	  // Update each message
+	  const updatedMessages = [];
+	  for (const message of messages.Items) {
+		const updated = await updateItem(TABLE_NAME, message.id, { isRead });
+		updatedMessages.push(updated);
+	  }
+  
+	  res.status(200).json({
+		message: "Messages read status updated successfully",
+		data: updatedMessages,
+	  });
+  
+	} catch (err) {
+	  console.error("Error while updating read status:", err);
+	  res.status(500).json({
+		message: "Something went wrong while updating the read status",
+		error: err.message || err,
+	  });
+	}
+  });  
+  
+
+//Get unread message count
+router.post("/unread-counts", verifyToken, async (req, res) => {
+	const USER_TABLE_NAME = 'users'
+	const { adminId } = req.body;
+	try {
+	  const users = await getAllItems(USER_TABLE_NAME);
+
+  
+	  const unreadCounts = await Promise.all(users.Items.map(async (user) => {
+		const params = {
+		  TableName: TABLE_NAME,
+		  FilterExpression: "senderId = :senderId AND receiverId = :receiverId AND isRead = :isRead",
+		  ExpressionAttributeValues: {
+			":senderId": user.id,
+			":receiverId": adminId,
+			":isRead": false,
+		  },
+		};
+		const messages = await getConditionalRecords(params);
+		return {
+		  userId: user.id,
+		  unreadCount: messages.length,
+		};
+	  }));
+  
+	  res.success({ data: unreadCounts, message: "Unread counts fetched successfully" });
+	} catch (err) {
+	  console.error("Error fetching unread counts:", err);
+	  res.errors({ message: "Failed to fetch unread counts", data: err });
+	}
+  });  
+
+
 
 
 /**

@@ -47,7 +47,11 @@ const options = {
 
 // Middleware to use i18n
 //app.use(i18n.init);
-app.use(cors());
+app.use(cors({
+  origin: ['https://hindsenaparty.com'],
+  credentials: true
+}));
+
 app.use(translateMiddleware);
 app.use(express.json());
 //app.use(morgan('dev'));
@@ -74,7 +78,7 @@ app.use("/api/v1/dashboard", dashboardRoute);
 app.use("/api/v1/chat", chatRoute);
 app.use("/api/v1/notification", notificationRoute);
 
-//app.listen(PORT, () => console.log(`Server Started at PORT:${PORT}`));
+// app.listen(PORT, () => console.log(`Server Started at PORT:${PORT}`));
 // Create HTTPS Server
 const server = https.createServer(options, app)
 server.listen(PORT, () => {
